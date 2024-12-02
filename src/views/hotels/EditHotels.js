@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Typography, TextField, Button, Box, Paper, Grid } from '@mui/material';
+import {
+  Typography,
+  TextField,
+  Button,
+  Box,
+  Paper,
+  Grid,
+  Checkbox,
+  FormControlLabel,
+} from '@mui/material';
 
 function EditHotel() {
   const { id } = useParams();
@@ -9,23 +18,27 @@ function EditHotel() {
     name: '',
     country: '',
     city: '',
+    shortTitle: '',
     description: '',
+    price: '',
     image: '',
-    rating: '',
-    reviews: '',
+    gallery: [],
+    startRating: '',
     category: '',
-    duration: '',
-    hours: '',
+    numberOfGuests: '',
+    bedrooms: '',
+    beds: '',
+    baths: '',
     tags: '',
-    activities: '',
+    map: '',
+    facilities: [],
     featured: false,
     verified: false,
     recommended: false,
   });
-  console.log('hotel', hotel);
 
   useEffect(() => {
-    const fetchPlaceDetails = async () => {
+    const fetchHotelDetails = async () => {
       try {
         const response = await fetch(
           `https://skyclub-dashboard-server-0923.vercel.app/api/hotels/${id}`,
@@ -33,21 +46,20 @@ function EditHotel() {
         if (response.ok) {
           const data = await response.json();
           setHotel(data);
-          console.log('data:::', data);
         } else {
-          console.error('Failed to fetch place details.');
+          console.error('Failed to fetch hotel details.');
         }
       } catch (error) {
-        console.error('Error fetching place details:', error);
+        console.error('Error fetching hotel details:', error);
       }
     };
-    fetchPlaceDetails();
+    fetchHotelDetails();
   }, [id]);
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
-    setHotel((prevPlace) => ({
-      ...prevPlace,
+    setHotel((prev) => ({
+      ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
   };
@@ -57,13 +69,31 @@ function EditHotel() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setHotel((prevPlace) => ({
-          ...prevPlace,
-          image: reader.result.split(',')[1], // Remove data URL part
+        setHotel((prev) => ({
+          ...prev,
+          image: reader.result.split(',')[1],
         }));
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleGalleryChange = (event) => {
+    const files = Array.from(event.target.files);
+    const readers = files.map((file) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(readers).then((images) => {
+      setHotel((prev) => ({
+        ...prev,
+        gallery: images,
+      }));
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -82,17 +112,17 @@ function EditHotel() {
       if (response.ok) {
         navigate(`/hotels`);
       } else {
-        console.error('Failed to update place.');
+        console.error('Failed to update hotel.');
       }
     } catch (error) {
-      console.error('Error updating place:', error);
+      console.error('Error updating hotel:', error);
     }
   };
 
   return (
     <Paper sx={{ padding: 3, maxWidth: '80%', margin: 'auto', mt: 5 }}>
       <Typography variant="h4" gutterBottom>
-        Edit Place
+        Edit Hotel
       </Typography>
       <form onSubmit={handleSubmit}>
         <Grid container spacing={2}>
@@ -104,6 +134,15 @@ function EditHotel() {
               onChange={handleChange}
               fullWidth
               required
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Short Title"
+              name="shortTitle"
+              value={hotel.shortTitle}
+              onChange={handleChange}
+              fullWidth
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -135,6 +174,100 @@ function EditHotel() {
               fullWidth
               multiline
               rows={4}
+              required
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Price"
+              name="price"
+              type="number"
+              value={hotel.price}
+              onChange={handleChange}
+              fullWidth
+              required
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Start Rating"
+              name="startRating"
+              type="number"
+              value={hotel.startRating}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Number of Guests"
+              name="numberOfGuests"
+              type="number"
+              value={hotel.numberOfGuests}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Bedrooms"
+              name="bedrooms"
+              type="number"
+              value={hotel.bedrooms}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Beds"
+              name="beds"
+              type="number"
+              value={hotel.beds}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Baths"
+              name="baths"
+              type="number"
+              value={hotel.baths}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              label="Tags (comma separated)"
+              name="tags"
+              value={hotel.tags}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              label="Map URL/Coordinates"
+              name="map"
+              value={hotel.map}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              label="Facilities (comma separated)"
+              name="facilities"
+              value={hotel.facilities.join(',')}
+              onChange={(e) =>
+                setHotel((prev) => ({
+                  ...prev,
+                  facilities: e.target.value.split(','),
+                }))
+              }
+              fullWidth
             />
           </Grid>
           <Grid item xs={12}>
@@ -152,113 +285,42 @@ function EditHotel() {
               />
             )}
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Rating"
-              name="rating"
-              type="number"
-              value={hotel.rating}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Reviews"
-              name="reviews"
-              type="number"
-              value={hotel.reviews}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Category"
-              name="category"
-              value={hotel.category}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Duration"
-              name="duration"
-              type="number"
-              value={hotel.duration}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Hours"
-              name="hours"
-              value={hotel.hours}
-              onChange={handleChange}
-              fullWidth
-            />
+          <Grid item xs={12}>
+            <input type="file" accept="image/*" multiple onChange={handleGalleryChange} />
+            {hotel.gallery.length > 0 &&
+              hotel.gallery.map((img, index) => (
+                <img
+                  key={index}
+                  src={`data:image/jpeg;base64,${img}`}
+                  alt={`Gallery ${index + 1}`}
+                  style={{ width: '100px', height: 'auto', margin: '5px' }}
+                />
+              ))}
           </Grid>
           <Grid item xs={12}>
-            <TextField
-              label="Tags (comma separated)"
-              name="tags"
-              value={hotel.tags}
-              onChange={handleChange}
-              fullWidth
+            <FormControlLabel
+              control={
+                <Checkbox name="featured" checked={hotel.featured} onChange={handleChange} />
+              }
+              label="Featured"
             />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              label="Activities (comma separated)"
-              name="activities"
-              value={hotel.activities}
-              onChange={handleChange}
-              fullWidth
+            <FormControlLabel
+              control={
+                <Checkbox name="verified" checked={hotel.verified} onChange={handleChange} />
+              }
+              label="Verified"
             />
-          </Grid>
-          <Grid item xs={12}>
-            <label>
-              <input
-                type="checkbox"
-                name="featured"
-                checked={hotel.featured}
-                onChange={handleChange}
-              />
-              Featured
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                name="verified"
-                checked={hotel.verified}
-                onChange={handleChange}
-              />
-              Verified
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                name="recommended"
-                checked={hotel.recommended}
-                onChange={handleChange}
-              />
-              Recommended
-            </label>
+            <FormControlLabel
+              control={
+                <Checkbox name="recommended" checked={hotel.recommended} onChange={handleChange} />
+              }
+              label="Recommended"
+            />
           </Grid>
         </Grid>
         <Box sx={{ textAlign: 'right', mt: 3 }}>
           <Button type="submit" variant="contained" color="primary">
-            Save
-          </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={() => navigate(`/places`)}
-            sx={{ ml: 2 }}
-          >
-            Cancel
+            Update Hotel
           </Button>
         </Box>
       </form>
